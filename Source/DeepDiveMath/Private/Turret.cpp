@@ -69,7 +69,6 @@ void ATurret::TrackTarget(float DeltaTime) {
     FVector DirToTarget = (CurrentTarget->GetActorLocation() - TurretHead->GetComponentLocation()).GetSafeNormal();
     RotateTowards(DirToTarget, DeltaTime);
 
-    
     if (!IsTargetInSight(CurrentTarget)) {
         CurrentTarget = nullptr;
     }
@@ -90,12 +89,19 @@ void ATurret::RotateTowards(const FVector& TargetDir, float DeltaTime) {
     FRotator DesiredRot = TargetDir.Rotation();
     FRotator CurrentRot = TurretHead->GetComponentRotation();
     float MaxDelta = MaxAngularSpeedDeg * DeltaTime;
-    
+
     float YawDelta = FMath::FindDeltaAngleDegrees(CurrentRot.Yaw, DesiredRot.Yaw);
     float AppliedDelta = FMath::Clamp(YawDelta, -MaxDelta, MaxDelta);
+    
+    float NewYaw = CurrentRot.Yaw + AppliedDelta;
+    float RelativeYaw = FMath::FindDeltaAngleDegrees(BaseYawDeg, NewYaw);
+    
+    float ClampedRelativeYaw = FMath::Clamp(RelativeYaw, -SweepAmplitudeDeg, SweepAmplitudeDeg);
+    
+    float ClampedYaw = BaseYawDeg + ClampedRelativeYaw;
 
-    TurretHead->SetRelativeRotation(FRotator(0, CurrentRot.Yaw + AppliedDelta, 0));
-    CurrentYawDeg = CurrentRot.Yaw + AppliedDelta;
+    TurretHead->SetRelativeRotation(FRotator(0.f, ClampedYaw, 0.f));
+    CurrentYawDeg = ClampedYaw;
 }
 
 FVector ATurret::GetForwardVectorWithMath(const FRotator& ActorRotator) const
